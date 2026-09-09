@@ -11,7 +11,7 @@
 
 The name is a tribute to a relationship built through mathematics. Joan Clarke joined Alan Turing in Bletchley Park's Hut 8, where intellect became companionship and companionship briefly became an engagement in 1941. Turing was honest with her about being gay. The engagement ended, but their affection and trust did not. They remained friends for the rest of his life, and Joan was among the first people he wrote to after his arrest. Their story was not a conventional romance. Two brilliant minds seeing each other clearly and choosing to remain close.
 
-This project does not cast Alice and Bob as Alan and Joan. It borrows the image of two people working beside one another, joined by curiosity, tenderness, and code. Historical details are available from [GCHQ](https://www.gchq.gov.uk/information/joan-clarke) and [English Heritage](https://www.english-heritage.org.uk/visit/blue-plaques/joan-clarke/).
+This project does not cast Alice and Bob as Alan and Joan. It borrows the image of two people working beside one another joined by code. Historical details are available from [GCHQ](https://www.gchq.gov.uk/information/joan-clarke) and [English Heritage](https://www.english-heritage.org.uk/visit/blue-plaques/joan-clarke/).
 
 ## What it contains
 
