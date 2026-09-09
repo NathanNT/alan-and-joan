@@ -1,0 +1,23 @@
+# Local diagnostics and machine-specific reports
+debug.log
+compte-rendu-controles.md
+Configurer-*.ps1
+logs/
+
+# Generated environment data and backups
+Compte-1/
+Compte-2/
+VSCode-Codex/
+*.bak.*
+
+# Authentication and local application state
+auth.json
+**/auth.json
+globalStorage/
+**/globalStorage/
+.codex/
+
+# Editor and OS noise
+.vscode/
+Thumbs.db
+Desktop.ini
