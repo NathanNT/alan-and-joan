@@ -1,0 +1,5 @@
+interface:
+  display_name: "Neighboring Keyboards"
+  short_description: "Tender messages between isolated Codex partners"
+  brand_color: "#D7B56D"
+  default_prompt: "Use $alice-bob-lovers to send a tender coding note to the other environment."

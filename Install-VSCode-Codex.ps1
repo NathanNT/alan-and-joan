@@ -55,6 +55,25 @@ function Backup-And-WriteBytes {
     return $true
 }
 
+function Copy-TextTree {
+    param(
+        [Parameter(Mandatory = $true)][string]$Source,
+        [Parameter(Mandatory = $true)][string]$Destination
+    )
+
+    $sourceRoot = (Resolve-Path -LiteralPath $Source).Path.TrimEnd('\')
+    $destinationFull = [IO.Path]::GetFullPath($Destination).TrimEnd('\')
+    if ($sourceRoot -ieq $destinationFull) { return }
+
+    foreach ($file in Get-ChildItem -LiteralPath $sourceRoot -File -Recurse) {
+        if ($file.FullName -match '[\\/]__pycache__[\\/]') { continue }
+        $relative = $file.FullName.Substring($sourceRoot.Length).TrimStart('\')
+        $target = Join-Path $destinationFull $relative
+        $content = [System.IO.File]::ReadAllText($file.FullName)
+        Backup-And-Write -Path $target -Content $content | Out-Null
+    }
+}
+
 function New-TintedVsCodeIcon {
     param(
         [string]$CodeExe,
@@ -412,7 +431,9 @@ function New-OrUpdateShortcut {
     $shell = New-Object -ComObject WScript.Shell
     if (Test-Path -LiteralPath $Path) {
         $existing = $shell.CreateShortcut($Path)
-        $ours = ($existing.Description -like 'VSCode-Codex:*') -or ($existing.Arguments -like ('*' + [IO.Path]::GetFileName($script:LauncherPath) + '*'))
+        $ours = ($existing.Description -like 'VSCode-Codex:*') -or
+            ($existing.Arguments -like ('*' + [IO.Path]::GetFileName($script:LauncherPath) + '*')) -or
+            ($existing.Arguments -like '*Start-Conversation-GUI.ps1*')
         if (-not $ours) {
             throw "Le raccourci existe deja mais ne semble pas appartenir a cette installation: $Path"
         }
@@ -453,9 +474,14 @@ $directories = @(
     (Join-Path $script:InstallRoot 'Compte-2\vscode\User'),
     (Join-Path $script:InstallRoot 'Compte-2\extensions'),
     (Join-Path $script:InstallRoot 'Compte-2\codex'),
+    (Join-Path $script:InstallRoot 'Compte-1\codex\skills'),
+    (Join-Path $script:InstallRoot 'Compte-2\codex\skills'),
     (Join-Path $script:InstallRoot 'lanceurs'),
     (Join-Path $script:InstallRoot 'configuration'),
-    (Join-Path $script:InstallRoot 'logs')
+    (Join-Path $script:InstallRoot 'logs'),
+    (Join-Path $script:InstallRoot 'conversation\messages'),
+    (Join-Path $script:InstallRoot 'conversation\receipts'),
+    (Join-Path $script:InstallRoot 'conversation\web')
 )
 foreach ($directory in $directories) {
     New-Item -ItemType Directory -Path $directory -Force | Out-Null
@@ -648,6 +674,35 @@ $selfDestination = Join-Path $script:InstallRoot 'configuration\Install-VSCode-C
 $selfContent = [System.IO.File]::ReadAllText($MyInvocation.MyCommand.Path)
 Backup-And-Write -Path $selfDestination -Content $selfContent | Out-Null
 
+# Conserve une copie du tableau de correspondance et du skill avec le script de
+# maintenance. Les messages et recus existants ne sont jamais recopies ni effaces.
+$repositoryPayload = if (Test-Path -LiteralPath (Join-Path $PSScriptRoot 'conversation\server.py')) {
+    $PSScriptRoot
+} elseif (Test-Path -LiteralPath (Join-Path $PSScriptRoot 'payload\conversation\server.py')) {
+    Join-Path $PSScriptRoot 'payload'
+} else {
+    $null
+}
+
+if ($repositoryPayload) {
+    $conversationSource = Join-Path $repositoryPayload 'conversation'
+    $skillSource = Join-Path $repositoryPayload 'skills\alice-bob-lovers'
+    if (-not (Test-Path -LiteralPath (Join-Path $skillSource 'SKILL.md'))) {
+        throw "Payload du skill Alice/Bob incomplet: $skillSource"
+    }
+
+    Copy-TextTree -Source $conversationSource -Destination (Join-Path $script:InstallRoot 'conversation')
+    foreach ($account in 1, 2) {
+        Copy-TextTree -Source $skillSource -Destination (Join-Path $script:InstallRoot "Compte-$account\codex\skills\alice-bob-lovers")
+    }
+
+    $maintenancePayload = Join-Path $script:InstallRoot 'configuration\payload'
+    Copy-TextTree -Source $conversationSource -Destination (Join-Path $maintenancePayload 'conversation')
+    Copy-TextTree -Source $skillSource -Destination (Join-Path $maintenancePayload 'skills\alice-bob-lovers')
+} else {
+    Write-Warning 'Payload conversation/skill absent: les environnements VS Code restent installes, mais la correspondance locale ne peut pas etre mise a jour.'
+}
+
 if (-not $SkipExtensionInstall) {
     foreach ($account in 1, 2) {
         $userData = Join-Path $script:InstallRoot "Compte-$account\vscode"
@@ -703,6 +758,13 @@ foreach ($account in 1, 2) {
     New-OrUpdateShortcut -Path $shortcutPath -Target $powerShellTarget -Arguments $shortcutArguments -WorkingDirectory (Join-Path $script:InstallRoot "Compte-$account") -Description "VSCode-Codex: environnement $displayName - $colorName, donnees et authentification separees" -IconLocation $iconLocation
 }
 
+$conversationLauncher = Join-Path $script:InstallRoot 'conversation\Start-Conversation-GUI.ps1'
+if (Test-Path -LiteralPath $conversationLauncher) {
+    $conversationShortcut = Join-Path $script:Desktop 'Alice & Bob - Conversation.lnk'
+    $conversationArguments = '-NoLogo -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "{0}"' -f $conversationLauncher
+    New-OrUpdateShortcut -Path $conversationShortcut -Target $powerShellTarget -Arguments $conversationArguments -WorkingDirectory (Join-Path $script:InstallRoot 'conversation') -Description 'VSCode-Codex: correspondance locale entre Alice et Bob' -IconLocation ($script:Code.CodeExe + ',0')
+}
+
 $readmePath = Join-Path $script:InstallRoot 'README-installation.md'
 $readme = @'
 # Deux environnements VS Code Codex separes
@@ -713,8 +775,15 @@ Cette installation ajoute deux instances Windows natives independantes sans modi
 
 - `Codex - Alice - Bleu.lnk` ouvre l'environnement **Alice — Bleu** avec `Compte-1\vscode`, `Compte-1\extensions` et `Compte-1\codex`. Son raccourci utilise une grande icone VS Code recoloree en bleu cobalt, distincte du bleu VS Code d'origine.
 - `Codex - Bob - Rouge.lnk` ouvre l'environnement **Bob — Rouge** avec `Compte-2\vscode`, `Compte-2\extensions` et `Compte-2\codex`. Son raccourci utilise une grande icone VS Code filtree en rouge.
+- `Alice & Bob - Conversation.lnk` ouvre leur tableau de correspondance local dans le navigateur. Il ecoute uniquement sur `127.0.0.1` et ne partage aucune connexion Codex.
 
 Les deux icones personnalisees sont stockees dans `configuration\icons` et contiennent plusieurs resolutions pour rester bien dimensionnees sur le Bureau et dans l'Explorateur.
+
+## Correspondance Alice & Bob
+
+Le skill `$alice-bob-lovers` est installe separement dans chacun des deux dossiers `CODEX_HOME`. Demandez a Alice d'envoyer un message, puis demandez a Bob de lire ses nouveaux messages et de repondre. Le tableau les affiche automatiquement, mais ne reveille et ne controle aucune session Codex.
+
+Les messages sont des fichiers JSON locaux en clair dans `conversation\messages`. N'y placez jamais de mot de passe, jeton, cookie, cle privee, contenu d'`auth.json` ou autre secret.
 
 Les lanceurs definissent `CODEX_HOME` uniquement dans leur propre processus et ses enfants, retirent localement `VSCODE_IPC_HOOK_CLI` et `ELECTRON_RUN_AS_NODE`, puis lancent VS Code avec `--user-data-dir`, `--extensions-dir`, `--new-window` et `--sync off`. Ils n'installent rien au lancement quotidien.
 

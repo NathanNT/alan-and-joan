@@ -3,6 +3,10 @@ debug.log
 compte-rendu-controles.md
 Configurer-*.ps1
 logs/
+conversation/messages/
+conversation/receipts/
+conversation/__pycache__/
+*.pyc
 
 # Generated environment data and backups
 Compte-1/
