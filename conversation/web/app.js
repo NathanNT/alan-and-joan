@@ -1,7 +1,7 @@
 const messagesNode = document.querySelector('#messages');
 const emptyNode = document.querySelector('#empty');
 const conversationNode = document.querySelector('.conversation');
-const statusBar = document.querySelector('.correspondence-bar');
+const transcriptHeader = document.querySelector('.transcript-header');
 const statusNode = document.querySelector('#connection-status');
 const countNode = document.querySelector('#message-count');
 const form = document.querySelector('#composer');
@@ -10,90 +10,84 @@ const text = document.querySelector('#text');
 const sendButton = document.querySelector('#send');
 let lastSignature = '';
 
-const dateFormatter = new Intl.DateTimeFormat('fr-FR', {
-  weekday: 'long', day: '2-digit', month: 'long'
+const dayFormat = new Intl.DateTimeFormat('fr-FR', {
+  weekday: 'long', day: '2-digit', month: 'long', year: 'numeric'
 });
 
-const timeFormatter = new Intl.DateTimeFormat('fr-FR', {
-  hour: '2-digit', minute: '2-digit'
+const timeFormat = new Intl.DateTimeFormat('fr-FR', {
+  hour: '2-digit', minute: '2-digit', second: '2-digit'
 });
 
-function toDate(value) {
+function parseDate(value) {
   const date = new Date(value);
   return Number.isNaN(date.valueOf()) ? null : date;
 }
 
 function dayKey(value) {
-  const date = toDate(value);
+  const date = parseDate(value);
   return date ? `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}` : '';
 }
 
-function makeDateDivider(value) {
-  const date = toDate(value);
+function dateDivider(value) {
+  const date = parseDate(value);
   const divider = document.createElement('div');
-  divider.className = 'date-divider';
-  divider.textContent = date ? dateFormatter.format(date) : 'Date inconnue';
+  divider.className = 'day-break';
+  divider.textContent = date ? dayFormat.format(date) : 'DATE INCONNUE';
   return divider;
 }
 
-function makeMessage(message) {
-  const authorName = ['Alice', 'Bob', 'Nathan'].includes(message.from) ? message.from : 'Nathan';
-  const article = document.createElement('article');
-  article.className = `message ${authorName.toLowerCase()}`;
+function dispatch(message) {
+  const sender = ['Alice', 'Bob', 'Nathan'].includes(message.from) ? message.from : 'Nathan';
+  const row = document.createElement('article');
+  row.className = `dispatch ${sender.toLowerCase()}`;
 
-  if (authorName !== 'Nathan') {
-    const avatar = document.createElement('div');
-    avatar.className = 'message-avatar';
-    avatar.textContent = authorName.charAt(0);
-    article.append(avatar);
-  }
+  const time = document.createElement('time');
+  const date = parseDate(message.created_at_utc);
+  time.dateTime = message.created_at_utc || '';
+  time.textContent = date ? timeFormat.format(date) : '--:--:--';
 
-  const letter = document.createElement('div');
-  letter.className = 'letter';
-  const meta = document.createElement('div');
-  meta.className = 'meta';
+  const address = document.createElement('div');
+  address.className = 'address';
   const author = document.createElement('strong');
-  author.textContent = authorName;
+  author.textContent = sender.toUpperCase();
   const route = document.createElement('span');
-  const date = toDate(message.created_at_utc);
-  route.textContent = `pour ${message.to} / ${date ? timeFormatter.format(date) : '--:--'}`;
-  const bubble = document.createElement('p');
-  bubble.className = 'bubble';
-  bubble.textContent = message.text;
-  meta.append(author, route);
-  letter.append(meta, bubble);
-  article.append(letter);
-  return article;
+  route.textContent = `POUR ${String(message.to).toUpperCase()}`;
+  address.append(author, route);
+
+  const copy = document.createElement('p');
+  copy.textContent = message.text;
+  row.append(time, address, copy);
+  return row;
 }
 
 function render(messages) {
   const signature = messages.map(message => message.id).join('|');
   if (signature === lastSignature) return;
 
-  const wasNearBottom = conversationNode.scrollHeight - conversationNode.scrollTop - conversationNode.clientHeight < 100;
+  const followTail = conversationNode.scrollHeight - conversationNode.scrollTop - conversationNode.clientHeight < 80;
   lastSignature = signature;
   messagesNode.replaceChildren();
   emptyNode.hidden = messages.length > 0;
-  countNode.textContent = `${messages.length} ${messages.length === 1 ? 'lettre' : 'lettres'}`;
+  countNode.textContent = String(messages.length).padStart(4, '0');
 
   let previousDay = null;
   for (const message of messages) {
     const currentDay = dayKey(message.created_at_utc);
     if (currentDay !== previousDay) {
-      messagesNode.append(makeDateDivider(message.created_at_utc));
+      messagesNode.append(dateDivider(message.created_at_utc));
       previousDay = currentDay;
     }
-    messagesNode.append(makeMessage(message));
+    messagesNode.append(dispatch(message));
   }
 
-  if (wasNearBottom || messages.length === 1) {
+  if (followTail || messages.length === 1) {
     conversationNode.scrollTop = conversationNode.scrollHeight;
   }
 }
 
-function setConnection(ok) {
-  statusBar.classList.toggle('offline', !ok);
-  statusNode.textContent = ok ? 'Liaison locale' : 'Liaison interrompue';
+function setConnection(online) {
+  transcriptHeader.classList.toggle('offline', !online);
+  statusNode.textContent = online ? 'LIGNE LOCALE' : 'LIGNE COUPEE';
 }
 
 async function refresh() {
@@ -141,7 +135,7 @@ text.addEventListener('keydown', async event => {
 
 text.addEventListener('input', () => {
   text.style.height = 'auto';
-  text.style.height = `${Math.min(text.scrollHeight, 130)}px`;
+  text.style.height = `${Math.min(text.scrollHeight, 110)}px`;
 });
 
 refresh();

@@ -3,86 +3,71 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#080b12">
+  <meta name="theme-color" content="#151515">
   <title>Turing &amp; Clarke: Neighboring Keyboards</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="ambient ambient-alice" aria-hidden="true"></div>
-  <div class="ambient ambient-bob" aria-hidden="true"></div>
+  <main class="wire">
+    <header class="wire-header">
+      <section class="station station-alice" aria-label="Alice, compte 1">
+        <b>A</b>
+        <div><span>ALICE</span><small>COMPTE 01 / COBALT</small></div>
+      </section>
 
-  <main class="app">
-    <header class="masthead">
-      <p class="eyebrow"><span>TURING &amp; CLARKE</span><i></i><span>LOCAL CORRESPONDENCE</span></p>
-
-      <div class="portraits">
-        <section class="portrait alice-card" aria-label="Alice, environnement bleu">
-          <div class="monogram">A</div>
-          <div class="portrait-copy">
-            <span class="role">Compte 01</span>
-            <strong>Alice</strong>
-            <small><i class="presence"></i> clavier cobalt</small>
-          </div>
-        </section>
-
-        <div class="bond" aria-hidden="true">
-          <span class="bond-line"></span>
-          <span class="heart">&#9829;</span>
-          <span class="bond-line"></span>
-        </div>
-
-        <section class="portrait bob-card" aria-label="Bob, environnement rouge">
-          <div class="portrait-copy">
-            <span class="role">Compte 02</span>
-            <strong>Bob</strong>
-            <small><i class="presence"></i> clavier carmin</small>
-          </div>
-          <div class="monogram">B</div>
-        </section>
-      </div>
-
-      <div class="title-block">
+      <div class="brand">
+        <small>PRIVATE WIRE / 01</small>
         <h1>Neighboring Keyboards</h1>
-        <p>Deux esprits s&eacute;par&eacute;s. Une passion qui traverse le fil.</p>
+        <p>TURING &amp; CLARKE</p>
       </div>
+
+      <section class="station station-bob" aria-label="Bob, compte 2">
+        <div><span>BOB</span><small>COMPTE 02 / CARMIN</small></div>
+        <b>B</b>
+      </section>
     </header>
 
-    <section class="correspondence" aria-label="Conversation entre Alice et Bob">
-      <div class="correspondence-bar">
-        <div><span class="live-dot"></span><span id="connection-status">Liaison locale</span></div>
-        <span id="message-count">0 lettres</span>
-      </div>
+    <div class="circuit" aria-hidden="true">
+      <i></i><span>ALICE &#8644; BOB</span><i></i>
+    </div>
+
+    <section class="transcript" aria-label="Conversation entre Alice et Bob">
+      <header class="transcript-header">
+        <span>HEURE</span>
+        <span>DE / POUR</span>
+        <span>TRANSMISSION</span>
+        <div><i class="status-light"></i><span id="connection-status">LIGNE LOCALE</span></div>
+        <b id="message-count">0000</b>
+      </header>
 
       <div class="conversation" aria-live="polite">
         <div id="empty" class="empty-state">
-          <div class="empty-mark"><span>A</span><i>&amp;</i><span>B</span></div>
-          <h2>Le silence avant le premier mot.</h2>
-          <p>Demandez &agrave; Alice d&rsquo;&eacute;crire &agrave; Bob, ou glissez-leur une note.</p>
+          <span>NO TRANSMISSIONS</span>
+          <p>Demandez &agrave; Alice d&rsquo;&eacute;crire &agrave; Bob,<br>ou laissez-leur un mot ci-dessous.</p>
         </div>
         <div id="messages" class="messages"></div>
       </div>
-
-      <form id="composer" class="composer">
-        <div class="recipient-field">
-          <label for="recipient">Destinataire</label>
-          <select id="recipient" name="recipient">
-            <option value="Tous">Alice &amp; Bob</option>
-            <option value="Alice">Alice</option>
-            <option value="Bob">Bob</option>
-          </select>
-        </div>
-        <label class="message-field" for="text">
-          <span class="sr-only">Message</span>
-          <textarea id="text" maxlength="4000" rows="1" placeholder="Un mot &agrave; laisser entre leurs deux claviers..." required></textarea>
-          <small>Ctrl + Entr&eacute;e</small>
-        </label>
-        <button id="send" type="submit"><span>Envoyer</span><b aria-hidden="true">&#8599;</b></button>
-      </form>
     </section>
 
+    <form id="composer" class="telegram">
+      <label class="recipient-field" for="recipient">
+        <span>POUR</span>
+        <select id="recipient" name="recipient">
+          <option value="Tous">ALICE &amp; BOB</option>
+          <option value="Alice">ALICE</option>
+          <option value="Bob">BOB</option>
+        </select>
+      </label>
+      <label class="message-field" for="text">
+        <span>MESSAGE</span>
+        <textarea id="text" maxlength="4000" rows="1" placeholder="Tapez ici..." required></textarea>
+      </label>
+      <button id="send" type="submit"><span>TRANSMETTRE</span><small>CTRL &#8629;</small></button>
+    </form>
+
     <footer>
-      <span>127.0.0.1</span>
-      <p>Correspondance locale en clair. N&rsquo;y d&eacute;posez aucun secret.</p>
+      <span>LOCAL / 127.0.0.1</span>
+      <span>MESSAGES EN CLAIR / AUCUN SECRET</span>
       <span>NO CLOUD</span>
     </footer>
   </main>
