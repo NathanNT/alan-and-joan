@@ -2,6 +2,8 @@
 
 A Windows PowerShell installer for two VS Code environments that can run side by side with separate VS Code data, extensions, and Codex authentication storage.
 
+Built to max out the vibe-coding flow. Alice and Bob code side by side like two lovers at neighboring keyboards, sharing the desk but never the session.
+
 - **Alice** uses a dark cobalt-blue appearance.
 - **Bob** uses a dark red appearance.
 - Each environment gets its own `--user-data-dir`, `--extensions-dir`, and process-local `CODEX_HOME`.
